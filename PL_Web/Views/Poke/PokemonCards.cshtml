@@ -1,0 +1,276 @@
+﻿@{
+    ViewBag.Title = "PokemonCards con AJAX";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Pokémon Cards con AJAX</h2>
+<img src="https://i.pinimg.com/originals/ca/e6/dc/cae6dcc5398f91d2abc6e8d5dcee3fe5.gif" style="width:30px; margin-right:5px;">
+
+<style>
+    /*Botón de paginación*/
+    #pagination button {
+        padding: 10px 20px;
+        background-color: #007BFF;
+        border: none;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+        #pagination button hover {
+            background-color: #0056b3;
+        }
+
+    /*Efecto Hover a mini Cards*/
+    .pokemon-card {
+        transition: transform 0.3s ease;
+    }
+
+        .pokemon-card:hover {
+            transform: scale(1.05);
+            z-index: 2;
+        }
+</style>
+
+<!--Buscador por nombre-->
+<input type="text" id="search-input" placeholder="Buscar Pokémon...">
+
+<!--Input para límite de Pokémon por página-->
+<input type="number" id="limit-input" placeholder="Cantidad por página" min="1" max="1000" style="width:200px;">
+
+<!--Dropdown para filtrar por tipo-->
+<select id="type-filter" style="margin-left:10px;"></select>
+
+<!--Contenedor de mini Cartas-->
+<div id="pokemon-cards" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px;"></div>
+
+<!--Paginación-->
+<div id="pagination" style="margin-top: 20px; display: flex; justify-content: center; gap: 10px;"></div>
+
+<!--Modal para Carta individual Completa-->
+<div id="pokemon-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; display: flex;">
+    <div id="modal-content" style="background: white; padding: 20px; border-radius: 10px; width: 300px; position: relative;">
+        <span id="modal-close" style="position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold;">X</span>
+        <div id="modal-body"></div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+
+    //Variables globales:
+    let currentPageUrl = "https://pokeapi.co/api/v2/pokemon?limit=24"; //Cargar 24 Pokémones
+    let nextPageUrl = null;
+    let prevPageUrl = null;
+    let allPokemonList = [];
+
+    $(document).ready(function () {
+
+        //Mostrar los pokemones BUSQUEDA
+        fetchAllPokemonNames();
+        //Cargar los pokémones de la pagina actual
+        loadPokemons(currentPageUrl);
+
+        //Cargar información para el DropDownList
+        loadTypes();
+
+        //Busqueda por Nombre
+        $("#search-input").on("keyup", function () {
+            const query = $(this).val().toLowerCase();
+            if (query === "") {
+                loadPokemons(currentPageUrl); // vuelve a cargar los 24 iniciales o actuales
+            } else {
+                // Filtro por nombre
+                const filtered = allPokemonList.filter(p => p.name.includes(query));
+                renderPokemonList(filtered);
+                $("#pagination").hide(); // ocultar paginación durante búsqueda
+            }
+        });
+
+        // Límite personalizado
+        $("#limit-input").on("input", function () {
+            const val = parseInt($(this).val());
+            currentLimit = isNaN(val) || val <= 0 ? 24 : val;
+            currentPageUrl = `https://pokeapi.co/api/v2/pokemon?limit=${currentLimit}`;
+            loadPokemons(currentPageUrl);
+        });
+
+        // Filtro por tipo
+        $("#type-filter").on("change", function () {
+            const type = $(this).val();
+            if (!type) {
+                loadPokemons(currentPageUrl);
+            } else {
+                filterByType(type);
+            }
+        });
+
+        // Modal click
+        $(document).on("click", ".pokemon-card", function (e) {
+            e.preventDefault();
+            const url = $(this).data("url");
+
+            if (!url) return;
+
+            $.get(url, function (poke) {
+                //Mostrar los iconos en lugar del texto de TIPOS
+                //const types = poke.types.map(t => t.type.name).join(', ');
+                const types = poke.types.map(t => `<img src="/Content/icons/${t.type.name}.png" title="${t.type.name}" style="width:30px; margin-right:5px;">`).join('');
+
+                const abilities = poke.abilities.map(a => a.ability.name).join(', ');
+                const stats = poke.stats.map(s => `${s.stat.name}: ${s.base_stat}`).join('<br>');
+                const html = `
+                    <h2 style="text-transform: capitalize;">${poke.name}</h2>
+                    <img src="${poke.sprites.other['official-artwork'].front_default || poke.sprites.front_default}" style="width: 150px;">
+                    <p><strong>Tipo:</strong> ${types}</p>
+                    <p><strong>Habilidades:</strong> ${abilities}</p>
+                    <p><strong>Estadísticas:</strong><br>${stats}</p>
+                `;
+                $("#modal-body").html(html);
+                $("#pokemon-modal").fadeIn();
+            });
+        });
+
+        // Cerrar modal
+        $("#modal-close").click(function () {
+            $("#pokemon-modal").fadeOut();
+        });
+
+        // Botones de paginación
+        /*$(document).on("click", "#next-page", function () {
+            loadPokemons(nextPageUrl);
+        });
+        $(document).on("click", "#prev-page", function () {
+            loadPokemons(prevPageUrl);
+        });*/
+
+        // Paginación
+        $(document).on("click", "#next-page", () => nextPageUrl && loadPokemons(nextPageUrl));
+        $(document).on("click", "#prev-page", () => prevPageUrl && loadPokemons(prevPageUrl));
+
+
+    });
+
+    //Cargar Pokémon (mini-cards + paginación)
+    function loadPokemons(url) {
+        currentPageUrl = url;
+        $.get(url, data => {
+            $("#pokemon-cards").empty();
+            nextPageUrl = data.next; prevPageUrl = data.previous;
+            data.results.forEach(p => $.get(p.url, pokeData => {
+                const types = pokeData.types.map(t => t.type.name);
+                const typesImage = pokeData.types.map(t =>
+                    `<img src="/Content/icons/${t.type.name}.png" title="${t.type.name}" style="width:30px; margin-right:5px;">`
+                ).join('');
+                const color = getColorByType(types[0]);
+                const cardHtml = `
+                    <div class="pokemon-card" data-url="${p.url}" style="
+                        background-color:${color};
+                        background-image: url(https://raw.githubusercontent.com/ACSBITMEN/Pokemon-App/refs/heads/main/docs/img/PokeballOpacitad.png);
+                        background-size: 130%;
+                        background-repeat: no-repeat;
+                        background-position: 1rem 2rem;
+                        border-radius:8px;
+                        padding:10px;
+                        width:150px;
+                        text-align:center;
+                        color:white;
+                        cursor:pointer;">
+                        <img src="${pokeData.sprites.front_default}" alt="${pokeData.name}" style="width:100px; height:100px;">
+                        <h4>${pokeData.name}</h4>
+                        <p>${typesImage}</p>
+                    </div>`;
+                $("#pokemon-cards").append(cardHtml);
+            }));
+            $("#pagination").html('');
+            if (prevPageUrl) $("#pagination").append('<button id="prev-page">Anterior</button>');
+            if (nextPageUrl) $("#pagination").append('<button id="next-page">Siguiente</button>');
+            $("#pagination").show();
+        });
+    }
+
+    // Obtener lista completa para búsqueda
+    function fetchAllPokemonNames() {
+        $.get("https://pokeapi.co/api/v2/pokemon?limit=1300", data => {
+            allPokemonList = data.results;
+        });
+    }
+
+    // Cargar tipos en dropdown
+    function loadTypes() {
+        $.get("https://pokeapi.co/api/v2/type", data => {
+            const options = ['<option value="">Filtrar por tipo</option>'];
+            data.results.forEach(t =>
+                options.push(`<option value="${t.name}">${t.name}</option>`)
+            );
+            $("#type-filter").html(options.join(''));
+        });
+    }
+
+    // Filtrar por tipo (ajax)
+    function filterByType(type) {
+        $.get(`https://pokeapi.co/api/v2/type/${type}`, data => {
+            const list = data.pokemon.map(p => p.pokemon);
+            renderPokemonList(list);
+            $("#pagination").hide();
+        });
+    }
+
+    //Renderiza un array de mini-cards (para búsqueda o filtro)
+    function renderPokemonList(list) {
+        $("#pokemon-cards").empty();
+        list.forEach(p => $.get(p.url, pokeData => {
+            const types = pokeData.types.map(t => t.type.name);
+            const typesImage = pokeData.types.map(t =>
+                `<img src="/Content/icons/${t.type.name}.png" title="${t.type.name}" style="width:30px; margin-right:5px;">`
+            ).join('');
+            const color = getColorByType(types[0]);
+            const cardHtml = `
+                <div class="pokemon-card" data-url="${p.url}" style="
+                    background-color:${color};
+                    background-image: url(https://raw.githubusercontent.com/ACSBITMEN/Pokemon-App/refs/heads/main/docs/img/PokeballOpacitad.png);
+                    background-size: 130%;
+                    background-repeat: no-repeat;
+                    background-position: 1rem 2rem;
+                    border-radius:8px;
+                    padding:10px;
+                    width:150px;
+                    text-align:center;
+                    color:white;
+                    cursor:pointer;">
+                    <img src="${pokeData.sprites.front_default}" alt="${pokeData.name}" style="width:100px; height:100px;">
+                    <h4>${pokeData.name}</h4>
+                    <p>${typesImage}</p>
+                </div>`;
+            $("#pokemon-cards").append(cardHtml);
+        }));
+    }
+
+    // Colores por tipo de Pokémon
+    function getColorByType(type) {
+        var colors = {
+            grass: "#78C850",
+            fire: "#F08030",
+            water: "#6890F0",
+            bug: "#A8B820",
+            normal: "#A8A878",
+            electric: "#F8D030",
+            ground: "#E0C068",
+            fairy: "#EE99AC",
+            fighting: "#C03028",
+            psychic: "#F85888",
+            rock: "#B8A038",
+            ghost: "#705898",
+            ice: "#98D8D8",
+            dragon: "#7038F8",
+            dark: "#705848",
+            steel: "#B8B8D0",
+            poison: "#A040A0",
+            flying: "#A890F0"
+        };
+        return colors[type] || "#68A090";
+    }
+</script>

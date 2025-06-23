@@ -1,0 +1,97 @@
+﻿
+@{
+    ViewBag.Title = "Carta";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h2>Carta</h2>
+
+<!--CSS-->
+<style>
+    @@import url('https://fonts.googleapis.com/css2?family=Heebo&display=swap');
+
+    .card {
+        width: 320px;
+        height: 446px;
+        background-color: #211799;
+        background-image: url(https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/592ec50f-7a98-4675-a8f2-7915168c695f/d6i238g-6b96b53d-c949-45a6-ba13-3a0a38877ea8.png/v1/fit/w_420,h_590/bw_metal_basic_pokemon_card_blank_by_the_ketchi_d6i238g-375w-2x.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTkwIiwicGF0aCI6IlwvZlwvNTkyZWM1MGYtN2E5OC00Njc1LWE4ZjItNzkxNTE2OGM2OTVmXC9kNmkyMzhnLTZiOTZiNTNkLWM5NDktNDVhNi1iYTEzLTNhMGEzODg3N2VhOC5wbmciLCJ3aWR0aCI6Ijw9NDIwIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmltYWdlLm9wZXJhdGlvbnMiXX0.swxy9CuHBwfS-TLjKXVj2PQP8R2WdsuyeBNtVjb4PKQ);
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        border-radius: 15px;
+        box-shadow: -3px -3px 3px 0 rgba(#26e6f7, 0.3), 3px 3px 3px 0 rgba(#f759e4, 0.3), 0px 0px 6px 2px rgba(#ffe759, 0.3), 0px 35px 25px -15px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+        margin: 20px 10px;
+        animation: haloCard 15s ease infinite;
+    }
+
+    .card > span{
+        position: relative;
+        top: 45%;
+    }
+
+    .card:before,
+    .card::after{
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background-position: 0% 0%;
+        background-repeat: no-repeat;
+        background-size: 300% 300%;
+        mix-blend-mode: color-dodge;
+        opacity: 0.2;
+        z-index: 1;
+        animation: haloGradient 15s ease infinite;
+
+        background-image: linear-gradient(
+        115deg,
+            transparent 0%,
+            rgb(0, 231, 255) 30%,
+            rgb(255, 0, 231) 70%,
+            transparent: 100%);
+    }
+
+    .card:after{
+        background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/13471/sparkles.gif");
+        position: center;
+        background-size: 180%;
+        mix-blend-mode: color-dodge;
+        opacity: 1;
+        z-index: 2;
+        animation: haloSparkle 15
+    }
+
+</style>
+
+<main id="app">
+    <h1>Pokemon Card</h1>
+
+    <div class="card">
+
+    </div>
+
+    <span class="operator">+</span>
+    <div class="card">
+        <span> + Color-dodge</span>
+    </div>
+
+    <span class="operator">+</span>
+    <div class="card">
+        <span> + Color-dodge</span>
+    </div>
+
+    <span class="operator">=</span>
+    <div class="card">
+    </div>
+
+    <style class="hover"></style>
+
+</main>
+
+
