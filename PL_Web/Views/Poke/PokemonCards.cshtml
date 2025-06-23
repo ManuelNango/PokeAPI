@@ -7,6 +7,66 @@
 <img src="https://i.pinimg.com/originals/ca/e6/dc/cae6dcc5398f91d2abc6e8d5dcee3fe5.gif" style="width:30px; margin-right:5px;">
 
 <style>
+
+    @@import url('https://fonts.googleapis.com/css2?family=Heebo&display=swap');
+
+    .card {
+        width: 320px;
+        height: 446px;
+        background-color: black;
+        background-image: url(https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/592ec50f-7a98-4675-a8f2-7915168c695f/d6i238g-6b96b53d-c949-45a6-ba13-3a0a38877ea8.png/v1/fit/w_420,h_590/bw_metal_basic_pokemon_card_blank_by_the_ketchi_d6i238g-375w-2x.png?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NTkwIiwicGF0aCI6IlwvZlwvNTkyZWM1MGYtN2E5OC00Njc1LWE4ZjItNzkxNTE2OGM2OTVmXC9kNmkyMzhnLTZiOTZiNTNkLWM5NDktNDVhNi1iYTEzLTNhMGEzODg3N2VhOC5wbmciLCJ3aWR0aCI6Ijw9NDIwIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmltYWdlLm9wZXJhdGlvbnMiXX0.swxy9CuHBwfS-TLjKXVj2PQP8R2WdsuyeBNtVjb4PKQ);
+        background-size: cover;
+        background-repeat: no-repeat;
+        background-position: center;
+        border-radius: 15px;
+        box-shadow: -3px -3px 3px 0 rgba(#26e6f7, 0.3), 3px 3px 3px 0 rgba(#f759e4, 0.3), 0px 0px 6px 2px rgba(#ffe759, 0.3), 0px 35px 25px -15px rgba(0, 0, 0, 0.3);
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        vertical-align: middle;
+        margin: 20px 10px;
+        animation: haloCard 15s ease infinite;
+    }
+
+    .card > span{
+        position: relative;
+        top: 45%;
+    }
+
+    .card:before,
+    .card::after{
+        content: "";
+        /*position: absolute;*/
+        left: 0;
+        right: 0;
+        top: 0;
+        bottom: 0;
+        background-position: 0% 0%;
+        background-repeat: no-repeat;
+        background-size: 300% 300%;
+        mix-blend-mode: color-dodge;
+        opacity: 0.2;
+        z-index: 1;
+        animation: haloGradient 15s ease infinite;
+
+        background-image: linear-gradient(
+        115deg,
+            transparent 0%,
+            rgb(0, 231, 255) 30%,
+            rgb(255, 0, 231) 70%,
+            transparent: 100%);
+    }
+
+    .card:after{
+        background-image: url("https://s3-us-west-2.amazonaws.com/s.cdpn.io/13471/sparkles.gif");
+        /*position: center;*/
+        background-size: 180%;
+        mix-blend-mode: color-dodge;
+        opacity: 1;
+        z-index: 2;
+        animation: haloSparkle 15
+    }
+
     /*Botón de paginación*/
     #pagination button {
         padding: 10px 20px;
@@ -51,7 +111,7 @@
 
 <!--Modal para Carta individual Completa-->
 <div id="pokemon-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; display: flex;">
-    <div id="modal-content" style="background: white; padding: 20px; border-radius: 10px; width: 300px; position: relative;">
+    <div id="modal-content" class="card">
         <span id="modal-close" style="position: absolute; top: 10px; right: 10px; cursor: pointer; font-weight: bold;">X</span>
         <div id="modal-body"></div>
     </div>
@@ -123,10 +183,10 @@
                 const abilities = poke.abilities.map(a => a.ability.name).join(', ');
                 const stats = poke.stats.map(s => `${s.stat.name}: ${s.base_stat}`).join('<br>');
                 const html = `
-                    <h2 style="text-transform: capitalize;">${poke.name}</h2>
-                    <img src="${poke.sprites.other['official-artwork'].front_default || poke.sprites.front_default}" style="width: 150px;">
-                    <p><strong>Tipo:</strong> ${types}</p>
-                    <p><strong>Habilidades:</strong> ${abilities}</p>
+                    <center><h4 style="text-transform: capitalize; color: white; margin-top: 10px;">${poke.name}</h4></center>
+                    <center><img src="${poke.sprites.other['official-artwork'].front_default || poke.sprites.front_default}" style="width: 150px;"></center>
+                    <center><p style="color: white"><strong>Tipo:</strong> ${types}</p></center>
+                    <p style="color: white"><strong>Habilidades:</strong> ${abilities}</p>
                     <p><strong>Estadísticas:</strong><br>${stats}</p>
                 `;
                 $("#modal-body").html(html);
